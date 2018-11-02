@@ -10,4 +10,3 @@ client_dkb = FinTS3PinTanClient('12030000', DKB_ACC, DKB_PW, 'https://banking-dk
 
 konten = client_dkb.get_sepa_accounts()
 
-balance = client_dkb.get_holdings(konten[0])
