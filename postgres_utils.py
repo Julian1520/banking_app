@@ -1,14 +1,20 @@
-import psycopg2
-import os
+import pandas as pd
+from sqlalchemy import create_engine
 
-path = os.getcwd()
-with open('postgres_queries/create_table.sql', 'r') as test:
-    print(test.read())
 
-conn = psycopg2.connect(database=os.environ.get('DATABASE_BANKING'), user=os.environ.get('DATABASE_BANKING_USER'),
-                        password=os.environ.get('DATABASE_BANKING_PW'), host=os.environ.get('DATABASE_BANKING_HOST'),
-                        port=os.environ.get('DATABASE_BANKING_PORT'))
+class BankingDatabase(object):
 
-curs = conn.cursor()
-curs.execute('select * from public.dkb_transactions')
-print(curs.fetchall())
+    def __init__(self, user, password, host, port, database_name):
+        # ====== Connection ======
+        # Connecting to PostgreSQL by providing a sqlachemy engine
+        self.engine = create_engine(
+            'postgresql://' + user + ':' + password + '@' + host + ':' + port + '/' + database_name, echo=False)
+
+    def create_or_append_table(self, dataframe, table_name, mode='append'):
+        dataframe.to_sql(name=table_name, con=self.engine, if_exists=mode, index=False)
+
+    def read_from_db(self, query):
+        # ====== Reading table ======
+        # Reading PostgreSQL table into a pandas DataFrame
+        data = pd.read_sql(query, self.engine)
+        return data
