@@ -1,29 +1,40 @@
 import os
+import argparse
 from config_files.config_connections import banks
 from postgres_utils import BankingDatabase
 from connection_factory import GiroData
 
 if __name__ == '__main__':
 
-    for bank in banks:
-        giro_data = GiroData
-        temp_client = giro_data.get_client(bank.blz,
-                                           bank.account_number,
-                                           bank.account_password,
-                                           bank.link)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source_type", type=str, help='banks for giro accounts')
+    parser.add_argument("--mode_database", type=str, help='replace or append')
+    parser.add_argument("--start_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
+    parser.add_argument("--end_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
+    parsed_args = parser.parse_args()
 
-        temp_accounts = giro_data.get_accounts(temp_client)
-        temp_transactions = giro_data.get_transactions_df(temp_client,
-                                                          temp_accounts,
-                                                          '2018-07-01T00:00:00',
-                                                          '2018-07-31T00:00:00')
+    if parsed_args.source_type == 'banks':
 
-        temp_smpl_transactions = giro_data.simplify_df_transactions(bank.name, bank.blz, temp_transactions)
+        for bank in banks:
+            print(bank.name)
+            giro_data = GiroData(bank.blz, bank.account_number, bank.account_password, bank.link)
 
-        send_data = BankingDatabase(database_name=os.environ.get('DATABASE_BANKING'),
-                                    user=os.environ.get('DATABASE_BANKING_USER'),
-                                    password=os.environ.get('DATABASE_BANKING_PW'),
-                                    host=os.environ.get('DATABASE_BANKING_HOST'),
-                                    port=os.environ.get('DATABASE_BANKING_PORT'))
+            temp_accounts = giro_data.get_accounts()
+            temp_transactions = giro_data.get_transactions_df(temp_accounts,
+                                                              parsed_args.start_date,
+                                                              parsed_args.end_date)
 
-        send_data.create_or_append_table(temp_smpl_transactions, 'public.'+bank.name+'_transactions', mode='replace')
+            temp_smpl_transactions = giro_data.simplify_df_transactions(bank.name, bank.blz, temp_transactions)
+            temp_balance = giro_data.get_balance(temp_accounts)
+
+            send_data = BankingDatabase(database_name=os.environ.get('DATABASE_BANKING'),
+                                        user=os.environ.get('DATABASE_BANKING_USER'),
+                                        password=os.environ.get('DATABASE_BANKING_PW'),
+                                        host=os.environ.get('DATABASE_BANKING_HOST'),
+                                        port=os.environ.get('DATABASE_BANKING_PORT'))
+
+            send_data.create_or_append_table(temp_smpl_transactions,
+                                             bank.name+'_transactions',
+                                             mode=parsed_args.mode_database)
+
+            send_data.create_or_append_table(temp_balance, bank.name+'_balance', mode=parsed_args.mode_database)
