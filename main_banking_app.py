@@ -3,6 +3,7 @@ import argparse
 from config_files.config_connections import banks
 from postgres_utils import BankingDatabase
 from connection_factory import GiroData
+from fints.client import FinTS3PinTanClient
 
 if __name__ == '__main__':
 
@@ -17,7 +18,8 @@ if __name__ == '__main__':
 
         for bank in banks:
             print(bank.name)
-            giro_data = GiroData(bank.blz, bank.account_number, bank.account_password, bank.link)
+            client = FinTS3PinTanClient(bank.blz, bank.account_number, bank.account_password, bank.link)
+            giro_data = GiroData(client)
 
             temp_accounts = giro_data.get_accounts()
             temp_transactions = giro_data.get_transactions_df(temp_accounts,

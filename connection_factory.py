@@ -1,15 +1,17 @@
-from fints.client import FinTS3PinTanClient
 from config_files.config_variables import TIME_FORMAT, DROP_COLUMNS_TRANSACTIONS
 import pandas as pd
 import uuid
 from datetime import datetime
 import re
+from selenium import webdriver
+import os
+from bs4 import BeautifulSoup
 
 
 class GiroData(object):
 
-    def __init__(self, blz, account_number, account_password, hbci_link):
-        self.client = FinTS3PinTanClient(blz, account_number, account_password, hbci_link)
+    def __init__(self, client):
+        self.client = client
 
     def get_accounts(self):
         accounts = self.client.get_sepa_accounts()
@@ -45,3 +47,34 @@ class GiroData(object):
                                              'currency': balance.amount.currency}])
             df_balance = df_balance.append(df_balance_temp)
         return df_balance
+
+
+class DepotData(object):
+
+    def __init__(self, login, password):
+        self.login = login
+        self.password = password
+
+    def get_depot_df(self):
+        web = webdriver.Chrome('/Users/jschmiss/Documents/banking_app/chromedriver')
+        web.get('https://www.dkb.de/banking/depotstatus?$event=init')
+        web.find_element_by_name('j_username').send_keys(os.environ.get('DKB_ACC'))
+        web.find_element_by_name('j_password').send_keys(os.environ.get('DKB_PW'))
+        web.find_element_by_id('buttonlogin').click()
+
+        html = web.page_source
+        soup = BeautifulSoup(html)
+        table = soup.find('table', {'class': 'expandableTable portfolioOverviewTable'})
+        res=[]
+        for row in table.findAll('tr', attrs={'class': 'mainRow'}):
+            td = row.find_all('td')
+            line = [row.text.strip() for row in td if row.text.strip()]
+            if line:
+                res.append(line)
+
+        df = pd.DataFrame(res)
+
+        web.find_element_by_id('logout').click()
+        web.quit()
+
+        return df
