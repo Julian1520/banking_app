@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 from connection_factory import GiroData
+from config_files.test_dummy_data import TEST_TEMP_TRANSACTIONS, TEST_TEMP_SMPL_TRANSACTIONS
 from config_files.config_connections import banks
 import pandas as pd
 
@@ -17,6 +18,10 @@ class TestConnectionFactory(unittest.TestCase):
 
             self.assertIsInstance(test_account, list)
             self.assertEqual(len(test_account), 1)
+            self.assertTrue(bank.blz.isdigit())
+            self.assertTrue(bank.account_number.isdigit())
+            self.assertTrue(bank.link.startswith('https://'))
+            mock_client.get_sepa_accounts.assert_called_with()
 
     def test_get_transactions_df(self, MockClient):
 
@@ -29,6 +34,10 @@ class TestConnectionFactory(unittest.TestCase):
 
         self.assertIsInstance(test_transactions_df, pd.DataFrame)
         self.assertEqual(len(test_transactions_df), 2)
+
+    #def test_simplify_df_transactions(self):
+        #test_df_transactions = GiroData.simplify_df_transactions('test_bank', '123', pd.DataFrame(TEST_TEMP_TRANSACTIONS))
+        #self.assertCountEqual(test_df_transactions.amount, pd.DataFrame(TEST_TEMP_SMPL_TRANSACTIONS).amount)
 
 
 if __name__ == '__main__':

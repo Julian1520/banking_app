@@ -36,7 +36,7 @@ if __name__ == '__main__':
                                         port=os.environ.get('DATABASE_BANKING_PORT'))
 
             send_data.create_or_append_table(temp_smpl_transactions,
-                                             bank.name+'_transactions',
+                                             f'{bank.name}_transactions',
                                              mode=parsed_args.mode_database)
 
-            send_data.create_or_append_table(temp_balance, bank.name+'_balance', mode=parsed_args.mode_database)
+            send_data.create_or_append_table(temp_balance, f'{bank.name}_balance', mode=parsed_args.mode_database)

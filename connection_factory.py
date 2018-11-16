@@ -1,11 +1,15 @@
-from config_files.config_variables import TIME_FORMAT, DROP_COLUMNS_TRANSACTIONS
 import pandas as pd
 import uuid
-from datetime import datetime
 import re
-from selenium import webdriver
 import os
+import logging
 from bs4 import BeautifulSoup
+from selenium import webdriver
+from datetime import datetime
+from config_files.config_variables import TIME_FORMAT, DROP_COLUMNS_TRANSACTIONS
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class GiroData(object):
@@ -15,6 +19,7 @@ class GiroData(object):
 
     def get_accounts(self):
         accounts = self.client.get_sepa_accounts()
+        logger.info('Accounts fetched')
         return accounts
 
     def get_transactions_df(self, accounts, start_date, end_date):
@@ -55,7 +60,8 @@ class DepotData(object):
         self.login = login
         self.password = password
 
-    def get_depot_df(self):
+    @staticmethod
+    def get_depot_dkb_df():
         web = webdriver.Chrome('/Users/jschmiss/Documents/banking_app/chromedriver')
         web.get('https://www.dkb.de/banking/depotstatus?$event=init')
         web.find_element_by_name('j_username').send_keys(os.environ.get('DKB_ACC'))
