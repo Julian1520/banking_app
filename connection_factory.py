@@ -89,6 +89,23 @@ class DepotData(object):
     @staticmethod
     def simplify_df_depot(depot_dataframe):
         temp_depot = depot_dataframe
-        temp_depot = temp_depot.applymap(lambda x: re.sub(r'\s', '', x))
+        temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[\t\n\r]', '', x))
+        temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[^a-zA-Z]+St\.$', '', x))
+        temp_depot[1] = temp_depot[1].apply(lambda x: re.sub(r'Stück', '', x))
+        temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'[\s]', '', x))
+        temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'EUR', ' EUR ', x))
+        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'[\s]', '', x))
+        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+St\.', '', x))
+        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+€[^a-zA-Z]+€', '', x))
+        temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'[^a-zA-Z]+%[^a-zA-Z]+€$', '', x))
+        temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'^[A-Z0-9]+', '', x))
+        temp_depot.ix[:,0:3] = temp_depot.ix[:,0:3].applymap(lambda x: re.sub(r'[\s]', '', x))
+
+        temp_depot['introduction_course'], temp_depot['introduction_value'] = temp_depot[2].str.split('EUR', 1).str
+        temp_depot['course'], temp_depot['value'] = temp_depot[3].str.split('EUR', 1).str
+        temp_depot['isin_wkn'], temp_depot['name'] = temp_depot[0].str.split('/', 1).str
+        temp_depot['percent_change'], temp_depot['total_change'] = temp_depot[4].str.split('%', 1).str
+        temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
+        temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
 
         return temp_depot
