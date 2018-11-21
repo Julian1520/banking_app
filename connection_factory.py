@@ -1,8 +1,8 @@
 import pandas as pd
 import uuid
 import re
-import os
 import logging
+import os
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from datetime import datetime
@@ -10,6 +10,8 @@ from config_files.config_variables import TIME_FORMAT, DROP_COLUMNS_TRANSACTIONS
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+options = webdriver.ChromeOptions()
+options.add_argument('headless')
 
 
 class GiroData(object):
@@ -60,12 +62,11 @@ class DepotData(object):
         self.login = login
         self.password = password
 
-    @staticmethod
-    def get_depot_dkb_df():
-        web = webdriver.Chrome('/Users/jschmiss/Documents/banking_app/chromedriver')
+    def get_depot_dkb_df(self):
+        web = webdriver.Chrome(os.environ.get('PATH_CHROME_DRIVER'), options=options)
         web.get('https://www.dkb.de/banking/depotstatus?$event=init')
-        web.find_element_by_name('j_username').send_keys(os.environ.get('DKB_ACC'))
-        web.find_element_by_name('j_password').send_keys(os.environ.get('DKB_PW'))
+        web.find_element_by_name('j_username').send_keys(self.login)
+        web.find_element_by_name('j_password').send_keys(self.password)
         web.find_element_by_id('buttonlogin').click()
 
         html = web.page_source
@@ -84,3 +85,10 @@ class DepotData(object):
         web.quit()
 
         return df
+
+    @staticmethod
+    def simplify_df_depot(depot_dataframe):
+        temp_depot = depot_dataframe
+        temp_depot = temp_depot.applymap(lambda x: re.sub(r'\s', '', x))
+
+        return temp_depot
