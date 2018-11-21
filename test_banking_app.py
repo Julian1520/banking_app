@@ -5,10 +5,11 @@ from connection_factory import GiroData
 from config_files.test_dummy_data import TEST_TEMP_TRANSACTIONS, TEST_TEMP_SMPL_TRANSACTIONS
 from config_files.config_connections import banks
 from collections import namedtuple
-from datetime import datetime, date
+from datetime import date
 
 balance = namedtuple('balance', 'amount date')
 amount = namedtuple('amount', 'amount currency')
+
 
 class TestConnectionFactory(unittest.TestCase):
     @patch('fints.client.FinTS3PinTanClient', autospec=True)
@@ -51,6 +52,7 @@ class TestConnectionFactory(unittest.TestCase):
 
         test_balanace = GiroData(mock_client).get_balance([1])
         self.assertIsInstance(test_balanace, pd.DataFrame)
+        self.assertDictEqual(test_balanace.to_dict(orient='list'), {'amount': [123], 'currency': ['EUR'], 'date': ['2018-11-19']})
 
 
 if __name__ == '__main__':
