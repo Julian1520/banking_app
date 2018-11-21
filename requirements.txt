@@ -1,3 +1,4 @@
+beautifulsoup4==4.6.3
 certifi==2018.10.15
 chardet==3.0.4
 fints==1.0.1
@@ -5,10 +6,13 @@ idna==2.7
 mt-940==4.12.2
 numpy==1.15.4
 pandas==0.23.4
+psycopg2==2.7.6.1
 python-dateutil==2.7.5
 pytz==2018.7
 requests==2.20.1
+selenium==3.141.0
 sepaxml==2.0.0
 six==1.11.0
 SQLAlchemy==1.2.14
 urllib3==1.24.1
+webbot==0.0.9
