@@ -2,7 +2,7 @@ import os
 import argparse
 from config_files.config_connections import banks
 from postgres_utils import BankingDatabase
-from connection_factory import GiroData, DepotData
+from connection_factory import GiroData, DepotData, CreditCard, get_df_from_html_table
 from fints.client import FinTS3PinTanClient
 
 send_data = BankingDatabase(database_name=os.environ.get('DATABASE_BANKING'),
@@ -14,7 +14,8 @@ send_data = BankingDatabase(database_name=os.environ.get('DATABASE_BANKING'),
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--source_type", type=str, help='banks_giro for giro accounts, banks_depot for dkb depot')
+    parser.add_argument("--source_type", type=str, help='banks_giro for giro accounts, dkb_depot for dkb depot,'
+                                                        ' dkv_cc for dkb cc')
     parser.add_argument("--mode_database", type=str, help='replace or append')
     parser.add_argument("--start_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
     parser.add_argument("--end_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
@@ -41,9 +42,21 @@ if __name__ == '__main__':
 
             send_data.create_or_append_table(temp_balance, f'{bank.name}_balance', mode=parsed_args.mode_database)
 
-    elif parsed_args.source_type == 'banks_depot':
+    elif parsed_args.source_type == 'dkb_depot':
         depot_data = DepotData(os.environ.get('DKB_ACC'), os.environ.get('DKB_PW'))
-        temp_dkb_depot_df = depot_data.get_depot_dkb_df()
+        temp_dkb_depot_html = depot_data.get_depot_dkb_html()
+        temp_dkb_depot_df = get_df_from_html_table(temp_dkb_depot_html, 'expandableTable portfolioOverviewTable')
         temp_dkb_depot_df_smpl = depot_data.simplify_df_depot(temp_dkb_depot_df)
 
         send_data.create_or_append_table(temp_dkb_depot_df_smpl, 'depot_data', mode=parsed_args.mode_database)
+
+    elif parsed_args.source_type == 'dkb_cc':
+        credit_card = CreditCard(os.environ.get('DKB_ACC'), os.environ.get('DKB_PW'))
+        temp_credit_card_html = credit_card.get_credit_card_transactions_html(parsed_args.start_date,
+                                                                              parsed_args.end_date)
+        temp_credit_card_df = get_df_from_html_table(temp_credit_card_html,
+                                                     'expandableTable dateHandling creditcardtransactionsTable')
+
+        #print(temp_credit_card_df)
+        send_data.create_or_append_table(temp_credit_card_df, 'credit_card_data', mode=parsed_args.mode_database)
+
