@@ -1,4 +1,5 @@
 TIME_FORMAT = '%Y-%m-%dT%H:%M:%S'
+CC_TIME_FORMAT = '%m.%d.%y'
 DROP_COLUMNS_TRANSACTIONS = ['FRST_ONE_OFF_RECC', 'additional_position_date',
        'additional_position_reference', 'additional_purpose',
        'applicant_creditor_id',

@@ -14,6 +14,20 @@ options = webdriver.ChromeOptions()
 options.add_argument('headless')
 
 
+def get_df_from_html_table(html_table, table_class):
+    soup = BeautifulSoup(html_table)
+    table = soup.find('table', {'class': table_class})
+    res = []
+    for row in table.findAll('tr', attrs={'class': 'mainRow'}):
+        td = row.find_all('td')
+        line = [row.text.strip() for row in td if row.text.strip()]
+        if line:
+            res.append(line)
+    df = pd.DataFrame(res)
+
+    return df
+
+
 class GiroData(object):
 
     def __init__(self, client):
@@ -62,29 +76,16 @@ class DepotData(object):
         self.login = login
         self.password = password
 
-    def get_depot_dkb_df(self):
+    def get_depot_dkb_html(self):
         web = webdriver.Chrome(os.environ.get('PATH_CHROME_DRIVER'), options=options)
         web.get('https://www.dkb.de/banking/depotstatus?$event=init')
         web.find_element_by_name('j_username').send_keys(self.login)
         web.find_element_by_name('j_password').send_keys(self.password)
         web.find_element_by_id('buttonlogin').click()
-
         html = web.page_source
-        soup = BeautifulSoup(html)
-        table = soup.find('table', {'class': 'expandableTable portfolioOverviewTable'})
-        res=[]
-        for row in table.findAll('tr', attrs={'class': 'mainRow'}):
-            td = row.find_all('td')
-            line = [row.text.strip() for row in td if row.text.strip()]
-            if line:
-                res.append(line)
-
-        df = pd.DataFrame(res)
-
         web.find_element_by_id('logout').click()
         web.quit()
-
-        return df
+        return html
 
     @staticmethod
     def simplify_df_depot(depot_dataframe):
@@ -107,5 +108,32 @@ class DepotData(object):
         temp_depot['percent_change'], temp_depot['total_change'] = temp_depot[4].str.split('%', 1).str
         temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
         temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
-
         return temp_depot
+
+
+class CreditCard(object):
+
+    def __init__(self, login, password):
+        self.login = login
+        self.password = password
+
+    def get_credit_card_transactions_html(self, start_date, end_date):
+        web = webdriver.Chrome(os.environ.get('PATH_CHROME_DRIVER'), options=options)
+        web.get('https://www.dkb.de/banking/finanzstatus')
+        web.find_element_by_name('j_username').send_keys(self.login)
+        web.find_element_by_name('j_password').send_keys(self.password)
+        web.find_element_by_id('buttonlogin').click()
+
+        web.get('https://www.dkb.de/banking/finanzstatus/kreditkartenumsaetze?$event=init&caller=DkbTransactionBanking.content.banking.financialstatus.FinancialComposite')
+
+        cc_start_date = datetime.strptime(start_date, TIME_FORMAT).strftime('%m.%d.%y')
+        cc_end_date = datetime.strptime(end_date, TIME_FORMAT).strftime('%m.%d.%y')
+
+        web.find_element_by_name('postingDate').send_keys(cc_start_date)
+        web.find_element_by_name('toPostingDate').send_keys(cc_end_date)
+        web.find_element_by_id('searchbutton').click()
+
+        html = web.page_source
+        web.find_element_by_id('logout').click()
+        web.quit()
+        return html
