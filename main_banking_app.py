@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--source_type", type=str, help='banks_giro for giro accounts, dkb_depot for dkb depot,'
-                                                        ' dkv_cc for dkb cc')
+                                                        ' dkb_cc for dkb credit card')
     parser.add_argument("--mode_database", type=str, help='replace or append')
     parser.add_argument("--start_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
     parser.add_argument("--end_date", type=str, help='format: YYYY-MM-DDThh:mm:ss')
@@ -56,7 +56,7 @@ if __name__ == '__main__':
                                                                               parsed_args.end_date)
         temp_credit_card_df = get_df_from_html_table(temp_credit_card_html,
                                                      'expandableTable dateHandling creditcardtransactionsTable')
+        temp_credit_card_df_smpl = credit_card.simplify_df_cc(temp_credit_card_df)
 
-        #print(temp_credit_card_df)
-        send_data.create_or_append_table(temp_credit_card_df, 'credit_card_data', mode=parsed_args.mode_database)
+        send_data.create_or_append_table(temp_credit_card_df_smpl, 'credit_card_data', mode=parsed_args.mode_database)
 

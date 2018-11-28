@@ -108,6 +108,7 @@ class DepotData(object):
         temp_depot['percent_change'], temp_depot['total_change'] = temp_depot[4].str.split('%', 1).str
         temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
         temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
+        temp_depot = temp_depot.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
         return temp_depot
 
 
@@ -126,8 +127,8 @@ class CreditCard(object):
 
         web.get('https://www.dkb.de/banking/finanzstatus/kreditkartenumsaetze?$event=init&caller=DkbTransactionBanking.content.banking.financialstatus.FinancialComposite')
 
-        cc_start_date = datetime.strptime(start_date, TIME_FORMAT).strftime('%m.%d.%y')
-        cc_end_date = datetime.strptime(end_date, TIME_FORMAT).strftime('%m.%d.%y')
+        cc_start_date = datetime.strptime(start_date, TIME_FORMAT).strftime('%d.%m.%Y')
+        cc_end_date = datetime.strptime(end_date, TIME_FORMAT).strftime('%d.%m.%Y')
 
         web.find_element_by_name('postingDate').send_keys(cc_start_date)
         web.find_element_by_name('toPostingDate').send_keys(cc_end_date)
@@ -137,3 +138,14 @@ class CreditCard(object):
         web.find_element_by_id('logout').click()
         web.quit()
         return html
+
+    @staticmethod
+    def simplify_df_cc(cc_dataframe):
+        temp_cc = cc_dataframe
+        temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc[0].str.split('\n', 1).str
+        temp_cc['description'] = temp_cc[1]
+        temp_cc['value'] = temp_cc[2]
+        temp_cc['currency'] = temp_cc[3]
+        temp_cc.drop(columns=[0, 1, 2, 3, 4], inplace=True)
+        temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
+        return temp_cc
