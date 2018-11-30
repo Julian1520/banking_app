@@ -59,4 +59,3 @@ if __name__ == '__main__':
         temp_credit_card_df_smpl = credit_card.simplify_df_cc(temp_credit_card_df)
 
         send_data.create_or_append_table(temp_credit_card_df_smpl, 'credit_card_data', mode=parsed_args.mode_database)
-
