@@ -142,7 +142,7 @@ class CreditCard(object):
     @staticmethod
     def simplify_df_cc(cc_dataframe):
         temp_cc = cc_dataframe
-        temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc[0].str.split('\n', 1).str
+        temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc.loc[0].str.split('\n', 1).str
         temp_cc['description'] = temp_cc[1]
         temp_cc['value'] = temp_cc[2]
         temp_cc['currency'] = temp_cc[3]
