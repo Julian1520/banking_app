@@ -37,10 +37,9 @@ if __name__ == '__main__':
             temp_balance = giro_data.get_balance(temp_accounts)
 
             send_data.create_or_append_table(temp_smpl_transactions,
-                                             f'{bank.name}_transactions',
-                                             mode=parsed_args.mode_database)
+                                            bank.name + '_transactions',mode=parsed_args.mode_database)
 
-            send_data.create_or_append_table(temp_balance, f'{bank.name}_balance', mode=parsed_args.mode_database)
+            send_data.create_or_append_table(temp_balance, bank.name + '_balance', mode=parsed_args.mode_database)
 
     elif parsed_args.source_type == 'dkb_depot':
         depot_data = DepotData(os.environ.get('DKB_ACC'), os.environ.get('DKB_PW'))
