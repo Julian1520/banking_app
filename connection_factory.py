@@ -159,4 +159,3 @@ class CreditCard(object):
             return temp_cc
         else:
             return cc_dataframe
-
