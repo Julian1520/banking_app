@@ -50,14 +50,17 @@ class GiroData(object):
 
     @staticmethod
     def simplify_df_transactions(bank_name, bank_blz, transactions_dataframe):
-        df_temp = transactions_dataframe[:]
-        df_temp.drop(DROP_COLUMNS_TRANSACTIONS, inplace=True, axis=1)
-        df_temp = df_temp.astype(str)
-        df_temp.amount = df_temp.amount.apply(lambda x: float(re.search('(?<=<)(.*\n?)(?= )', x).groups(1)[0]))
-        df_temp['bank_name'] = bank_name
-        df_temp['bank_blz'] = bank_blz
-        df_temp['transaction_uuid'] = df_temp.index.to_series().map(lambda x: str(uuid.uuid4()))
-        return df_temp
+        if len(transactions_dataframe) > 0:
+            df_temp = transactions_dataframe[:]
+            df_temp.drop(DROP_COLUMNS_TRANSACTIONS, inplace=True, axis=1)
+            df_temp = df_temp.astype(str)
+            df_temp.amount = df_temp.amount.apply(lambda x: float(re.search('(?<=<)(.*\n?)(?= )', x).groups(1)[0]))
+            df_temp['bank_name'] = bank_name
+            df_temp['bank_blz'] = bank_blz
+            df_temp['transaction_uuid'] = df_temp.index.to_series().map(lambda x: str(uuid.uuid4()))
+            return df_temp
+        else:
+            return transactions_dataframe
 
     def get_balance(self, accounts):
         df_balance = pd.DataFrame()
@@ -89,27 +92,30 @@ class DepotData(object):
 
     @staticmethod
     def simplify_df_depot(depot_dataframe):
-        temp_depot = depot_dataframe
-        temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[\t\n\r]', '', x))
-        temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[^a-zA-Z]+St\.$', '', x))
-        temp_depot[1] = temp_depot[1].apply(lambda x: re.sub(r'Stück', '', x))
-        temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'[\s]', '', x))
-        temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'EUR', ' EUR ', x))
-        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'[\s]', '', x))
-        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+St\.', '', x))
-        temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+€[^a-zA-Z]+€', '', x))
-        temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'[^a-zA-Z]+%[^a-zA-Z]+€$', '', x))
-        temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'^[A-Z0-9]+', '', x))
-        temp_depot.ix[:,0:3] = temp_depot.ix[:,0:3].applymap(lambda x: re.sub(r'[\s]', '', x))
+        if len(depot_dataframe) > 0:
+            temp_depot = depot_dataframe
+            temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[\t\n\r]', '', x))
+            temp_depot[0] = temp_depot[0].apply(lambda x: re.sub(r'[^a-zA-Z]+St\.$', '', x))
+            temp_depot[1] = temp_depot[1].apply(lambda x: re.sub(r'Stück', '', x))
+            temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'[\s]', '', x))
+            temp_depot[2] = temp_depot[2].apply(lambda x: re.sub(r'EUR', ' EUR ', x))
+            temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'[\s]', '', x))
+            temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+St\.', '', x))
+            temp_depot[3] = temp_depot[3].apply(lambda x: re.sub(r'^[^a-zA-Z]+€[^a-zA-Z]+€', '', x))
+            temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'[^a-zA-Z]+%[^a-zA-Z]+€$', '', x))
+            temp_depot[4] = temp_depot[4].apply(lambda x: re.sub(r'^[A-Z0-9]+', '', x))
+            temp_depot.ix[:,0:3] = temp_depot.ix[:,0:3].applymap(lambda x: re.sub(r'[\s]', '', x))
 
-        temp_depot['introduction_course'], temp_depot['introduction_value'] = temp_depot[2].str.split('EUR', 1).str
-        temp_depot['course'], temp_depot['value'] = temp_depot[3].str.split('EUR', 1).str
-        temp_depot['isin_wkn'], temp_depot['name'] = temp_depot[0].str.split('/', 1).str
-        temp_depot['percent_change'], temp_depot['total_change'] = temp_depot[4].str.split('%', 1).str
-        temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
-        temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
-        temp_depot = temp_depot.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
-        return temp_depot
+            temp_depot['introduction_course'], temp_depot['introduction_value'] = temp_depot[2].str.split('EUR', 1).str
+            temp_depot['course'], temp_depot['value'] = temp_depot[3].str.split('EUR', 1).str
+            temp_depot['isin_wkn'], temp_depot['name'] = temp_depot[0].str.split('/', 1).str
+            temp_depot['percent_change'], temp_depot['total_change'] = temp_depot[4].str.split('%', 1).str
+            temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
+            temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
+            temp_depot = temp_depot.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
+            return temp_depot
+        else:
+            return depot_dataframe
 
 
 class CreditCard(object):
@@ -141,11 +147,16 @@ class CreditCard(object):
 
     @staticmethod
     def simplify_df_cc(cc_dataframe):
-        temp_cc = cc_dataframe
-        temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc[0].str.split('\n', 1).str
-        temp_cc['description'] = temp_cc[1]
-        temp_cc['value'] = temp_cc[2]
-        temp_cc['currency'] = temp_cc[3]
-        temp_cc.drop(columns=[0, 1, 2, 3, 4], inplace=True)
-        temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
-        return temp_cc
+        if len(cc_dataframe) > 0:
+            temp_cc = cc_dataframe
+            temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc[0].str.split('\n', 1).str
+            temp_cc['description'] = temp_cc[1]
+            temp_cc['amount'] = temp_cc[2]
+            temp_cc['currency'] = temp_cc[3]
+            temp_cc['transaction_uuid'] = temp_cc.index.to_series().map(lambda x: str(uuid.uuid4()))
+            temp_cc.drop(columns=[0, 1, 2, 3, 4], inplace=True)
+            temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
+            return temp_cc
+        else:
+            return cc_dataframe
+
