@@ -163,11 +163,11 @@ class CreditCard(object):
             temp_cc = cc_dataframe
             temp_cc['value_date'], temp_cc['voucher_date'] = temp_cc[0].str.split('\n', 1).str
             temp_cc['description'] = temp_cc[1]
-            temp_cc['amount'] = temp_cc[2]
-            temp_cc['currency'] = temp_cc[3]
+            temp_cc['amount'], temp_cc['amount_foreign'] = temp_cc[2].str.split('\n', 1).str
+            temp_cc['currency'], temp_cc['currency_foreign'] = temp_cc[3].str.split('\n', 1).str
             temp_cc['transaction_uuid'] = temp_cc.index.to_series().map(lambda x: str(uuid.uuid4()))
             temp_cc.drop(columns=[0, 1, 2, 3, 4], inplace=True)
-            temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
+            temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x) if(pd.notnull(x)) else x)
             return temp_cc
         else:
             return cc_dataframe
