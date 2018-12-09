@@ -53,9 +53,8 @@ if __name__ == '__main__':
         credit_card = CreditCard(os.environ.get('DKB_ACC'), os.environ.get('DKB_PW'))
         temp_credit_card_html = credit_card.get_credit_card_transactions_html(parsed_args.start_date,
                                                                               parsed_args.end_date)
-        temp_credit_card_df = get_df_from_html_table(temp_credit_card_html,
-                                                     'expandableTable dateHandling creditcardtransactionsTable')
-        temp_credit_card_df_smpl = credit_card.simplify_df_cc(temp_credit_card_df)
+
+        temp_credit_card_df_smpl = credit_card.simplify_df_cc(temp_credit_card_html)
 
         send_data.create_or_append_table(temp_credit_card_df_smpl, 'credit_card_data', mode=parsed_args.mode_database)
 

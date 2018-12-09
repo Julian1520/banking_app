@@ -140,10 +140,22 @@ class CreditCard(object):
         web.find_element_by_name('toPostingDate').send_keys(cc_end_date)
         web.find_element_by_id('searchbutton').click()
 
-        html = web.page_source
+        df_html_table = pd.DataFrame()
+
+        condition = True
+        while condition:
+            html = web.page_source
+            df_html_table = df_html_table.append(get_df_from_html_table(html, 'expandableTable dateHandling creditcardtransactionsTable'))
+
+            condition = 'title="Nächste Seite"' in html
+
+            if 'title="Nächste Seite"' in html:
+
+                web.find_element_by_xpath('//*[@title="Nächste Seite"]').click()
+
         web.find_element_by_id('logout').click()
         web.quit()
-        return html
+        return df_html_table
 
     @staticmethod
     def simplify_df_cc(cc_dataframe):
