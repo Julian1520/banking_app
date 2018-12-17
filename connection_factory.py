@@ -28,6 +28,15 @@ def get_df_from_html_table(html_table, table_class):
     return df
 
 
+def transform_text_to_number(input_series):
+    input_series = input_series.str.replace('.', '')
+    input_series = input_series.str.replace(',', '.')
+
+    input_series = pd.to_numeric(input_series)
+
+    return input_series
+
+
 class GiroData(object):
 
     def __init__(self, client):
@@ -70,6 +79,7 @@ class GiroData(object):
                                              'amount': balance.amount.amount,
                                              'currency': balance.amount.currency}])
             df_balance = df_balance.append(df_balance_temp)
+            df_balance.amount = pd.to_numeric(df_balance.amount)
         return df_balance
 
 
@@ -113,6 +123,7 @@ class DepotData(object):
             temp_depot.drop(columns=[0, 1, 2, 3, 4], inplace=True)
             temp_depot = temp_depot.applymap(lambda x: re.sub(r'EUR', '', x))
             temp_depot = temp_depot.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x))
+            temp_depot.value = transform_text_to_number(temp_depot.value)
             return temp_depot
         else:
             return depot_dataframe
@@ -123,6 +134,22 @@ class CreditCard(object):
     def __init__(self, login, password):
         self.login = login
         self.password = password
+
+    def get_credit_card_balance(self):
+        web = webdriver.Chrome(os.environ.get('PATH_CHROME_DRIVER'), options=options)
+        web.get('https://www.dkb.de/banking/finanzstatus')
+        web.find_element_by_name('j_username').send_keys(self.login)
+        web.find_element_by_name('j_password').send_keys(self.password)
+        web.find_element_by_id('buttonlogin').click()
+
+        cc_balance = web.find_element_by_xpath("(//td[@class=' alignRight amount bold'])[2]").text
+
+        cc_balance_df = pd.DataFrame({'date': [datetime.now().strftime("%Y-%m-%d")],
+                                      'amount': [cc_balance],
+                                      'currency': ['EUR']})
+
+        cc_balance_df.amount = transform_text_to_number(cc_balance_df.amount)
+        return cc_balance_df
 
     def get_credit_card_transactions_html(self, start_date, end_date):
         web = webdriver.Chrome(os.environ.get('PATH_CHROME_DRIVER'), options=options)
@@ -168,6 +195,7 @@ class CreditCard(object):
             temp_cc['transaction_uuid'] = temp_cc.index.to_series().map(lambda x: str(uuid.uuid4()))
             temp_cc.drop(columns=[0, 1, 2, 3, 4], inplace=True)
             temp_cc = temp_cc.applymap(lambda x: re.sub(r'[\t\n\r\s]', '', x) if(pd.notnull(x)) else x)
+            temp_cc.amount = transform_text_to_number(temp_cc.amount)
             return temp_cc
         else:
             return cc_dataframe

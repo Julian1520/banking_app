@@ -4,6 +4,7 @@ from config_files.config_connections import banks
 from postgres_utils import BankingDatabase
 from connection_factory import GiroData, DepotData, CreditCard, get_df_from_html_table
 from fints.client import FinTS3PinTanClient
+from classifier import classify_cc_transaction, classify_giro_transaction
 
 send_data = BankingDatabase(database_name=os.environ.get('DATABASE_BANKING'),
                             user=os.environ.get('DATABASE_BANKING_USER'),
@@ -34,6 +35,8 @@ if __name__ == '__main__':
                                                               parsed_args.end_date)
 
             temp_smpl_transactions = giro_data.simplify_df_transactions(bank.name, bank.blz, temp_transactions)
+            temp_smpl_transactions['tag'] = temp_smpl_transactions.apply(lambda row: classify_giro_transaction(row),
+                                                                         axis=1)
             temp_balance = giro_data.get_balance(temp_accounts)
 
             send_data.create_or_append_table(temp_smpl_transactions,
@@ -55,6 +58,10 @@ if __name__ == '__main__':
                                                                               parsed_args.end_date)
 
         temp_credit_card_df_smpl = credit_card.simplify_df_cc(temp_credit_card_html)
+        temp_credit_card_df_smpl['tag'] = temp_credit_card_df_smpl.apply(lambda row: classify_cc_transaction(row),
+                                                                         axis=1)
+
+        temp_credit_card_balance = credit_card.get_credit_card_balance()
 
         send_data.create_or_append_table(temp_credit_card_df_smpl, 'credit_card_data', mode=parsed_args.mode_database)
-
+        send_data.create_or_append_table(temp_credit_card_balance, 'credit_card_balance', mode=parsed_args.mode_database)
