@@ -1,5 +1,7 @@
-## private_banking
+# Private Banking Pipeline (work in progress)
 Data pipeline to extract transaction and balance data from the german banks Sparkasse and DKB.
+The pipeline can be used to extract giro account information for any bank. Depot and VISA credit card information
+are from DKB are possible, too.
 
 # Data sources
 * Sparkasse giro account
@@ -9,7 +11,7 @@ Data pipeline to extract transaction and balance data from the german banks Spar
 
 # Usage
 1. Setup config_files/config_connections.py:
-The files config_files/config_connections.py saves the information to collect
+The file config_files/config_connections.py saves the information to collect
 balance and transaction data from the giro accounts of german banks. The files has
 to store the connection information in the following format:
     ```
