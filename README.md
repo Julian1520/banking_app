@@ -1,7 +1,7 @@
 # Private Banking Pipeline (work in progress)
 Data pipeline to extract transaction and balance data from the german banks Sparkasse and DKB.
 The pipeline can be used to extract giro account information for any bank. Depot and VISA credit card information
-are from DKB are possible, too.
+can only be pulled from DKB.
 
 # Data sources
 * Sparkasse giro account
