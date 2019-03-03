@@ -35,12 +35,14 @@ if __name__ == '__main__':
                                                               parsed_args.end_date)
 
             temp_smpl_transactions = giro_data.simplify_df_transactions(bank.name, bank.blz, temp_transactions)
-            temp_smpl_transactions['tag'] = temp_smpl_transactions.apply(lambda row: classify_giro_transaction(row),
-                                                                         axis=1)
+
+            if len(temp_smpl_transactions) > 0:
+                temp_smpl_transactions['tag'] = temp_smpl_transactions.apply(lambda row: classify_giro_transaction(row),
+                                                                             axis=1)
             temp_balance = giro_data.get_balance(temp_accounts)
 
             send_data.create_or_append_table(temp_smpl_transactions,
-                                            bank.name + '_transactions',mode=parsed_args.mode_database)
+                                             bank.name + '_transactions', mode=parsed_args.mode_database)
 
             send_data.create_or_append_table(temp_balance, bank.name + '_balance', mode=parsed_args.mode_database)
 
@@ -64,4 +66,5 @@ if __name__ == '__main__':
         temp_credit_card_balance = credit_card.get_credit_card_balance()
 
         send_data.create_or_append_table(temp_credit_card_df_smpl, 'credit_card_data', mode=parsed_args.mode_database)
-        send_data.create_or_append_table(temp_credit_card_balance, 'credit_card_balance', mode=parsed_args.mode_database)
+        send_data.create_or_append_table(temp_credit_card_balance, 'credit_card_balance',
+                                         mode=parsed_args.mode_database)
